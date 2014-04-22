@@ -1,7 +1,8 @@
 from citemachine import util
 
+
 class DBLP(object):
-    """ 
+    """
     Assumed format (V6):
     #* --- paperTitle
     #@ --- Authors
@@ -10,7 +11,7 @@ class DBLP(object):
     #citation --- citation number (both -1 and 0 means none)
     #index ---- index id of this paper
     #arnetid ---- pid in arnetminer database
-    #% ---- the id of references of this paper (there are multiple lines, 
+    #% ---- the id of references of this paper (there are multiple lines,
         with each indicating a reference)
     #! --- Abstract
 
@@ -18,17 +19,22 @@ class DBLP(object):
     DATA URL: http://arnetminer.org/citation
     """
 
-    def __init__(self, src):
+    def __init__(self, src, max_records=None):
 
-        self.docs = {}
+        self.docs = DBLP.parse_to_record_dict(src, max_records)
+
+    @staticmethod
+    def parse_to_record_dict(src, max_records=None):
+
+        docs = {}
 
         with open(src, 'r') as document:
 
             # first line includes the number of citation links
-            line = document.readline().rstrip()
-            self.num_citation_links = int(line)
-
+            document.readline()
             line = document.readline()
+
+            num_records = 0
             record = {}
             while line:
 
@@ -68,8 +74,13 @@ class DBLP(object):
                     line = document.readline()
 
                 if line == '\n':
-                    self.docs[record['id']] = record
+                    docs[record['id']] = record
+                    num_records += 1
+
+                    if max_records and num_records >= max_records:
+                        break
                     record = {}
+
                 line = document.readline()
 
-    
+        return docs
