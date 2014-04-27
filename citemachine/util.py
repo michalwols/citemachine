@@ -40,6 +40,9 @@ class BiDirMap(object):
         self.key_to_val = {}
         self.val_to_key = {}
 
+    def __contains__(self, key):
+        return key in self.key_to_val
+
     def add(self, key, value):
         self.key_to_val[key] = value
         self.val_to_key[value] = key
