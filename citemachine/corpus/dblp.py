@@ -1,5 +1,3 @@
-
-
 # Assumed format (V6):
 # #* --- paperTitle
 # #@ --- Authors
@@ -97,7 +95,7 @@ def parse_to_text_dict(src, max_docs=None):
         src: path to DBLP file
         max_docs: sets a limit on how many documents to load from file
     Returns:
-        docs: dictionary mapping from document ids to a string with the 
+        text_dict: dictionary mapping from document ids to a string with the 
               title and abstract concatenated together
     """
     text_dict = {}
