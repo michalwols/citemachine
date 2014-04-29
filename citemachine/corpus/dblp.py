@@ -134,3 +134,77 @@ def parse_to_text_dict(src, max_docs=None):
             line = document.readline()
 
     return text_dict
+
+def parse_to_references_dict(src, max_docs=None):
+    """Parses a DBLP file
+
+    Args:
+        src: path to DBLP file
+        max_docs: sets a limit on how many documents to load from file
+    Returns:
+        docs: dictionary mapping from document ids to document reference dicts
+            docs[doc_id] -> doc, doc[field_name] -> field_value
+            where field_nam can be one of: "authors",
+                                           "conference",
+                                           "citation_count"
+                                           "id",
+                                           "references"
+    """
+    docs = {}
+
+    with open(src, 'r') as document:
+
+        # first line includes the number of citation links
+        document.readline()
+        line = document.readline()
+
+        num_docs = 0
+        doc = {}
+        while line:
+
+            if line.startswith('#*'):
+                line = document.readline()
+
+            if line.startswith('#@'):
+                doc['authors'] = line[2:].rstrip().split(',')
+                line = document.readline()
+
+            if line.startswith('#year'):
+                line = document.readline()
+
+            if line.startswith('#conf'):
+                doc['conference'] = line[5:].rstrip()
+                line = document.readline()
+
+            if line.startswith('#citation'):
+                doc['citation_count'] = int(line[9:].rstrip())
+                line = document.readline()
+
+            if line.startswith('#index'):
+                doc['id'] = line[6:].rstrip()
+                line = document.readline()
+
+            if line.startswith('#arnetid'):
+                line = document.readline()
+
+            if line.startswith('#%'):
+                references = []
+                while line.startswith('#%'):
+                    references.append(line[2:].rstrip())
+                    line = document.readline()
+                doc['references'] = references
+
+            if line.startswith('#!'):
+                line = document.readline()
+
+            if line == '\n':
+                docs[doc['id']] = doc
+                num_docs += 1
+
+                if max_docs and num_docs >= max_docs:
+                    break
+                doc = {}
+
+            line = document.readline()
+
+    return docs
