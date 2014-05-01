@@ -159,29 +159,26 @@ def parse_to_references_dict(src, max_docs=None):
         line = document.readline()
 
         num_docs = 0
-        doc = {}
+        references = []
         while line:
 
             if line.startswith('#*'):
                 line = document.readline()
 
             if line.startswith('#@'):
-                doc['authors'] = line[2:].rstrip().split(',')
                 line = document.readline()
 
             if line.startswith('#year'):
                 line = document.readline()
 
             if line.startswith('#conf'):
-                doc['conference'] = line[5:].rstrip()
                 line = document.readline()
 
             if line.startswith('#citation'):
-                doc['citation_count'] = int(line[9:].rstrip())
                 line = document.readline()
 
             if line.startswith('#index'):
-                doc['id'] = line[6:].rstrip()
+                doc_id = line[6:].rstrip()
                 line = document.readline()
 
             if line.startswith('#arnetid'):
@@ -192,18 +189,16 @@ def parse_to_references_dict(src, max_docs=None):
                 while line.startswith('#%'):
                     references.append(line[2:].rstrip())
                     line = document.readline()
-                doc['references'] = references
 
             if line.startswith('#!'):
                 line = document.readline()
 
-            if line == '\n':
-                docs[doc['id']] = doc
+            if line == '\n' and references:
+                docs[doc_id] = references
                 num_docs += 1
 
                 if max_docs and num_docs >= max_docs:
                     break
-                doc = {}
 
             line = document.readline()
 
