@@ -5,71 +5,107 @@ import nltk
 import gensim
 
 
-def num_encode(words_dict, word_num_map):
-    """Encodes the documents using the numbers assigned to each word
+class CorpusPreprocessor(object):
+    """Class used to preprocess textual data from the provided corpus"""
 
-    Args:
-        words_dict: dictionary mapping from document ids to list of words
-                    from the document
-        word_num_map: dictionary mapping from each word in the corpus to a
-                    unique integer
-    Returns:
-        documents: A list of encoded documents, with each document represented
-                   as a list of tuple of the form (word_num, word_count)
-    """
-    documents = []
-    for doc_id in words_dict:
+    def __init__(self, corpus, tokenize=None, stemmer=None,
+                 excluded_words=None, is_valid_word=None):
+        """
+        Args:
+            corpus: corpus object, which should contain a 'texts' dictionary
+                    mapping from document ids to the text of the document
+            tokenize: function used to tokenize the text
+            stemmer: stemming object, with method 'stem' which takes a word
+                    and returns a stemmed version of it
+            excluded_words: list of words that should be excluded from the
+                    final representation of the documents (stopwords)
+            is_valid_word: function used for further filtering,
+                    should take in a single word and return True or False
+        """
+        if stemmer:
+            self.stemmer = stemmer
+        else:
+            self.stemmer = nltk.stem.lancaster.LancasterStemmer()
 
-        words = words_dict[doc_id]
-        num_encoded = (word_num_map[word] for word in words)
-        documents.append(Counter(num_encoded).most_common())
+        if excluded_words:
+            self.excluded_words = set(stem_all(excluded_words, self.stemmer))
+        else:
+            self.excluded_words = set(stem_all(nltk.corpus.stopwords.words('english'),
+                                      self.stemmer))
 
-    return documents
+        if is_valid_word is None:
+            self.is_valid_word = lambda word: (len(word) > 2) and \
+                                              (word not in self.excluded_words)
+        else:
+            self.is_valid_word = is_valid_word
 
+        if tokenize is None:
+            self.tokenize = word_tokenize
+        else:
+            self.tokenize = tokenize
 
-def preprocess_documents(text_dict, stemmer=None, excluded_words=None,
-                         word_check_func=None):
-    """Batch preprocesses the text in each document
+        self._corpus = corpus
+        self._preprocess()
 
-    Args:
-        text_dict: dictionary from document id to document text
-        stemmer: stemming object, which provides a method called stem
-        excluded_words: list of words to be excluded from the final
-                    representation
-        word_check_func: boolean function to further validate each word
-    Returns:
-        words_dict: dictionary mapping from document id to list of preprocessed
-                    words
-        word_num_map: bidirectional map from word to unique number and unique
-                    number to word
-    """
-    if not stemmer:
-        stemmer = nltk.stem.lancaster.LancasterStemmer()
-    if not excluded_words:
-        excluded_words = set(stem_all(nltk.corpus.stopwords.words('english'),
-                             stemmer))
-    else:
-        excluded_words = set(stem_all(excluded_words, stemmer))
-    if not word_check_func:
-        word_check_func = lambda word: (len(word) > 2) and \
-                                       (word not in excluded_words)
+    def _preprocess(self):
 
-    word_num_map = BiDirMap()
-    words_dict = {}
-    cur_word_id = 0
+        word_num_map = BiDirMap()
+        words = {}
+        cur_word_id = 0
 
-    for doc_id, text in text_dict.items():
+        # store as local vars to avoid slow attribute lookups in tight loop
+        texts = self._corpus.texts
+        stemmer = self.stemmer
+        tokenize = self.tokenize
+        is_valid_word = self.is_valid_word
 
-        words = word_tokenize(text)
-        words = [word.rstrip('.') for word in words]
-        words = stem_all(words, stemmer)
-        words = filter(word_check_func, words)
+        for doc_id in texts.keys():
 
-        for word in words:
-            if word not in word_num_map:
-                word_num_map.add(word, cur_word_id)
-                cur_word_id += 1
+            ws = tokenize(texts[doc_id])
+            ws = [word.rstrip('.') for word in ws]
+            ws = stem_all(ws, stemmer)
+            ws = filter(is_valid_word, ws)
 
-        words_dict[doc_id] = words
+            for word in ws:
+                if word not in word_num_map:
+                    word_num_map.add(word, cur_word_id)
+                    cur_word_id += 1
 
-    return words_dict, word_num_map
+            words[doc_id] = ws
+
+        self._word_num_map = word_num_map
+        self.words = words
+
+    def to_number(self, word):
+        """Returns the unique identifier of the word"""
+        return self._word_num_map[word]
+
+    def to_word(self, word_number):
+        """Returns the word that corresponds to the unique identifier"""
+        return self._word_num_map.get_key(word_number)
+
+    def generate_number_encodings(self):
+        """Generates a new attribute called 'number_encodings', which is a
+        dictionary that maps from doc id to a list of tuples of words
+        represented as their ids and their count in the document.
+
+            [(word_id, word_count), ...]
+        """
+        # store as local vars to avoid slow attribute lookups in tight loop
+        number_encodings = {}
+        to_number = self.to_number
+        words = self.words
+
+        for doc_id in self._corpus.ids():
+            words_as_nums = (to_number(word) for word in words[doc_id])
+            number_encodings[doc_id] = Counter(words_as_nums).most_common()
+
+        self.number_encodings = number_encodings
+
+    def number_encoded_corpus(self):
+
+        if not hasattr(self, 'number_encodings'):
+            self.generate_number_encodings()
+
+        for doc_id in self._corpus.ids():
+            yield self.number_encodings[doc_id]
