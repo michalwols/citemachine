@@ -17,7 +17,7 @@
 class DBLP(object):
 
     def __init__(self, src, max_docs=None, only_with_refs_and_abstracts=True):
-        """Be default only stores records which contain an abstract and
+        """By default only stores records which contain both an abstract and
            a list of references"""
         self.titles = {}
         self.authors = {}
@@ -109,6 +109,23 @@ class DBLP(object):
 
                 line = document.readline()
 
+        self.texts = self.TextGetter(self)
+
+    class TextGetter(object):
+        """Used to allow 'dblp.texts[doc_id]' without an extra dictionary"""
+        def __init__(self, dblp):
+            self.dblp = dblp
+
+        def __getitem__(self, doc_id):
+            return self.dblp.titles[doc_id] + ' ' + self.dblp.abstracts[doc_id]
+
+        def keys(self):
+            return self.dblp.keys()
+
+        def items(self):
+            for key in self.keys():
+                yield (key, self[key])
+
     def remove_out_of_index_references(self):
         """Removes all references to documents that are not in the index
 
@@ -122,13 +139,12 @@ class DBLP(object):
             self.references[doc_id] = filter(is_in_index,
                                              self.references[doc_id])
 
-    def get_text(self, doc_id):
-        """Returns all of the text for the document"""
-        return self.titles[doc_id] + ' ' + self.abstracts[doc_id]
-
-    def ids(self):
+    def keys(self):
         """Returns ids of all documents in the index"""
         return self.titles.keys()
+
+    def ids(self):
+        return self.keys()
 
     def pop(self, doc_id, default=0):
         """Remove doc_id from index"""
