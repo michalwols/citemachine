@@ -2,7 +2,6 @@ from collections import Counter
 from nltk import word_tokenize
 from citemachine.util import stem_all, BiDirMap
 import nltk
-import gensim
 
 
 class CorpusPreprocessor(object):
