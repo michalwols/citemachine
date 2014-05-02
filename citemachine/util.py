@@ -1,17 +1,4 @@
-import nltk
 from collections import defaultdict
-
-
-def count_words(word_list, counts_dict=None):
-
-    if not counts_dict:
-        counts_dict = defaultdict(int)
-
-    for word in word_list:
-        counts_dict[word] += 1
-
-    return counts_dict
-
 
 def filter_dict(func, dictionary):
     """Filter a dictionary *in place* based on filter function
@@ -29,7 +16,6 @@ def filter_dict(func, dictionary):
 
 
 def stem_all(words, stemmer):
-
     return [stemmer.stem(w) for w in words]
 
 
