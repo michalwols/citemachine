@@ -17,6 +17,8 @@
 class DBLP(object):
 
     def __init__(self, src, max_docs=None, only_with_refs_and_abstracts=True):
+        """Be default only stores records which contain an abstract and
+           a list of references"""
         self.titles = {}
         self.authors = {}
         self.years = {}
@@ -25,7 +27,7 @@ class DBLP(object):
         self.references = {}
         self.abstracts = {}
 
-        title = auth = year = conf = cit = doc_id = \
+        title = auth = year = conf = cite_count = doc_id = \
             line = refs = abstract = None
 
         with open(src, 'r') as document:
@@ -54,7 +56,7 @@ class DBLP(object):
                     line = document.readline()
 
                 if line.startswith('#citation'):
-                    cit_count = int(line[9:].rstrip())
+                    cite_count = int(line[9:].rstrip())
                     line = document.readline()
 
                 if line.startswith('#index'):
@@ -83,7 +85,7 @@ class DBLP(object):
                             self.authors[doc_id] = auth
                             self.years[doc_id] = year
                             self.conferences[doc_id] = conf
-                            self.citation_counts[doc_id] = cit_count
+                            self.citation_counts[doc_id] = cite_count
                             self.references[doc_id] = refs
                             self.abstracts[doc_id] = abstract
                             num_docs += 1
@@ -92,7 +94,7 @@ class DBLP(object):
                         self.authors[doc_id] = auth
                         self.years[doc_id] = year
                         self.conferences[doc_id] = conf
-                        self.citation_counts[doc_id] = cit_count
+                        self.citation_counts[doc_id] = cite_count
                         if refs:
                             self.references[doc_id] = refs
                         if abstract:
@@ -102,7 +104,7 @@ class DBLP(object):
                     if max_docs and num_docs >= max_docs:
                         break
 
-                    title = auth = year = conf = cit = doc_id = \
+                    title = auth = year = conf = cite_count = doc_id = \
                         line = refs = abstract = None
 
                 line = document.readline()
