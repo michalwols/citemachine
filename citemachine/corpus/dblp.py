@@ -60,7 +60,7 @@ class DBLP(object):
                     line = document.readline()
 
                 if line.startswith('#index'):
-                    doc_id = line[6:].rstrip()
+                    doc_id = int(line[6:].rstrip())
                     line = document.readline()
 
                 if line.startswith('#arnetid'):
@@ -143,6 +143,7 @@ class DBLP(object):
         """Returns ids of all documents in the index"""
         return self.titles.keys()
 
+    @property
     def ids(self):
         return self.keys()
 
@@ -203,7 +204,7 @@ def parse_to_doc_dict(src, max_docs=None):
                 line = document.readline()
 
             if line.startswith('#index'):
-                doc['id'] = line[6:].rstrip()
+                doc['id'] = int(line[6:].rstrip())
                 line = document.readline()
 
             if line.startswith('#arnetid'):
@@ -263,7 +264,7 @@ def parse_to_text_dict(src, max_docs=None):
             while not line.startswith('#index'):
                 line = document.readline()
 
-            doc_id = line[6:].rstrip()
+            doc_id = int(line[6:].rstrip())
             line = document.readline()
 
             while not (line.startswith('#!') or line == '\n'):
@@ -317,7 +318,7 @@ def parse_to_references_dict(src, max_docs=None):
                 line = document.readline()
 
             if line.startswith('#index'):
-                doc_id = line[6:].rstrip()
+                doc_id = int(line[6:].rstrip())
                 line = document.readline()
 
             if line.startswith('#arnetid'):

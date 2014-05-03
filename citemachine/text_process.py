@@ -83,6 +83,14 @@ class CorpusPreprocessor(object):
         """Returns the word that corresponds to the unique identifier"""
         return self._word_num_map.get_key(word_number)
 
+    @property
+    def id_to_word_map(self):
+        return self._word_num_map.val_to_key
+
+    @property
+    def word_to_id_map(self):
+        return self._word_num_map.key_to_val
+
     def generate_number_encodings(self):
         """Generates a new attribute called 'number_encodings', which is a
         dictionary that maps from doc id to a list of tuples of words
@@ -95,16 +103,21 @@ class CorpusPreprocessor(object):
         to_number = self.to_number
         words = self.words
 
-        for doc_id in self._corpus.ids():
+        for doc_id in self._corpus.ids:
             words_as_nums = (to_number(word) for word in words[doc_id])
             number_encodings[doc_id] = Counter(words_as_nums).most_common()
 
         self.number_encodings = number_encodings
 
+    @property
     def number_encoded_corpus(self):
+        """Returns the corpus as a list of word vectors"""
 
         if not hasattr(self, 'number_encodings'):
             self.generate_number_encodings()
 
-        for doc_id in self._corpus.ids():
-            yield self.number_encodings[doc_id]
+        corpus = []
+        for doc_id in self._corpus.ids:
+            corpus.append(self.number_encodings[doc_id])
+
+        return corpus

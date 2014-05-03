@@ -1,26 +1,13 @@
-from gensim.models.ldamodel import LdaModel
 from operator import itemgetter
-import cPickle
 
 
-class LDA(object):
+def build_topics_dict(lda, number_encodings_dict):
 
-    def __init__(self, number_encoded_corpus):
-        self.data = number_encoded_corpus
+    topics = {}
+    for doc_id in number_encodings_dict:
+        topics[doc_id] = lda[number_encodings_dict[doc_id]]
 
-    def train(self, num_topics=100):
-        self.model = LdaModel(self.data, num_topics)
-        self.num_topics = num_topics
-
-    def load_model(self, pickle_src):
-        with open(pickle_src, 'rb') as f:
-            self.model = cPickle.load(f)
-
-    def get_topics(self, number_encoded_doc):
-        return self.model[number_encoded_doc]
-
-    def top_words_for_topic(self, topic_number, top_n=10):
-        self.model.show_topic(topic=topic_number, topn=top_n)
+    return topics
 
 
 def topic_intersection(doc1_topics, doc2_topics):
