@@ -16,7 +16,8 @@
 
 class DBLP(object):
 
-    def __init__(self, src, max_docs=None, only_with_refs_and_abstracts=True):
+    def __init__(self, src, max_docs=None, only_with_refs_and_abstracts=True,
+                 remove_out_of_index_refs=True):
         """By default only stores records which contain both an abstract and
            a list of references"""
         self.titles = {}
@@ -48,7 +49,7 @@ class DBLP(object):
                     line = document.readline()
 
                 if line.startswith('#year'):
-                    year = line[5:].rstrip()
+                    year = int(line[5:].rstrip())
                     line = document.readline()
 
                 if line.startswith('#conf'):
@@ -69,7 +70,7 @@ class DBLP(object):
                 if line.startswith('#%'):
                     refs = []
                     while line.startswith('#%'):
-                        refs.append(line[2:].rstrip())
+                        refs.append(int(line[2:].rstrip()))
                         line = document.readline()
 
                 if line.startswith('#!'):
@@ -97,8 +98,12 @@ class DBLP(object):
                         self.citation_counts[doc_id] = cite_count
                         if refs:
                             self.references[doc_id] = refs
+                        else:
+                            self.references[doc_id] = []
                         if abstract:
                             self.abstracts[doc_id] = abstract
+                        else:
+                            self.abstracts[doc_id] = ''
                         num_docs += 1
 
                     if max_docs and num_docs >= max_docs:
@@ -110,6 +115,9 @@ class DBLP(object):
                 line = document.readline()
 
         self.texts = self.TextGetter(self)
+
+        if remove_out_of_index_refs:
+            self.remove_out_of_index_references()
 
     class TextGetter(object):
         """Used to allow 'dblp.texts[doc_id]' without an extra dictionary"""
@@ -132,7 +140,7 @@ class DBLP(object):
         NOTE: After removing the references, some documents might be left
               with no references
         """
-        index = set(self.ids())
+        index = set(self.keys())
         is_in_index = lambda ref: ref in index
 
         for doc_id in index:
@@ -142,10 +150,6 @@ class DBLP(object):
     def keys(self):
         """Returns ids of all documents in the index"""
         return self.titles.keys()
-
-    @property
-    def ids(self):
-        return self.keys()
 
     def pop(self, doc_id, default=0):
         """Remove doc_id from index"""
