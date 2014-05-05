@@ -2,7 +2,6 @@ from operator import itemgetter
 
 
 def build_topics_dict(lda, number_encodings_dict):
-
     topics = {}
     for doc_id in number_encodings_dict:
         topics[doc_id] = lda[number_encodings_dict[doc_id]]
@@ -53,10 +52,12 @@ def score_topics(query_topics, topics_dict,
     scores.sort(key=itemgetter(1), reverse=True)
     return scores
 
+
 def filter_scores(scores, query_year, citation_counts, years):
     is_feasible = lambda t: (years[t[0]] <= query_year) and \
                             (citation_counts[t[0]] > 0)
     return filter(is_feasible, scores)
+
 
 def locate_references(references, scores):
     """Finds the positions of the references in the topic scores list"""
