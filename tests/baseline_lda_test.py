@@ -16,7 +16,7 @@ def lda_recommender_setup(num_docs=None, num_topics=100, max_word_count=50000):
     dblp = DBLP('../Data/Watson/DBLP/DBLP.txt', num_docs)
     cp = CorpusPreprocessor(dblp, min_word_count=5, max_word_count=max_word_count)
 
-    recommender = LDARecommender(corpus=dblp, preprocessor=cp, num_topics=num_topics)
+    recommender = LDARecommender(corpus=dblp, corpus_preprocessor=cp, num_topics=num_topics)
     return recommender
 
 
