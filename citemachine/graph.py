@@ -10,15 +10,14 @@ class CommunityRank(object):
     def __init__(self, directed_graph):
         self.directed_graph = directed_graph
 
-        self.dendogram = community.generate_dendogram(self.directed_graph.to_undirected())
-        self.partitions = community.partition_at_level(self.dendogram,
-                                                       len(self.dendogram)-1)
+        dendogram = community.generate_dendogram(self.directed_graph.to_undirected())
+        partitions = community.partition_at_level(dendogram, len(dendogram)-1)
+        communities = self._get_communities(partitions)
+        major_communities = self._get_large_communities(communities)
 
-        self.communities = self._get_communities(self.partitions)
-        self.major_communities = self._get_large_communities(self.communities)
+        self.community_graphs = self._build_community_graphs(communities,
+                                      valid_communities=major_communities)
 
-        self.community_graphs = self._build_community_graphs(self.communities,
-                                     valid_communities=self.major_communities)
         self.pageranks = self._pagerank_communities(self.community_graphs)
 
     def _get_communities(self, partitions):
@@ -27,7 +26,7 @@ class CommunityRank(object):
             community_sets[community].add(node)
         return community_sets
 
-    def _get_large_communities(self, communities, min_size=100):
+    def _get_large_communities(self, communities, min_size=10):
 
         valid_communities = set()
         for com, nodes in communities.items():
@@ -51,7 +50,7 @@ class CommunityRank(object):
 
         pageranks = {}
         for com in community_graphs:
-            pageranks[com] = nx.pagerank(community_graphs[com])
+            pageranks[com] = nx.pagerank(community_graphs[com], max_iter=200)
         return pageranks
 
     def rankings_for_community(self, community_num):
