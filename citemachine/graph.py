@@ -7,10 +7,10 @@ import community
 
 class CommunityRank(object):
 
-    def __init__(self, graph):
-        self.graph = graph
+    def __init__(self, directed_graph):
+        self.directed_graph = directed_graph
 
-        self.dendogram = community.generate_dendogram(self.graph)
+        self.dendogram = community.generate_dendogram(self.directed_graph.to_undirected())
         self.partitions = community.partition_at_level(self.dendogram,
                                                        len(self.dendogram)-1)
 
@@ -43,7 +43,7 @@ class CommunityRank(object):
 
         community_graphs = {}
         for com in valid_communities:
-            community_graphs[com] = self.graph.subgraph(communities[com])
+            community_graphs[com] = self.directed_graph.subgraph(communities[com])
 
         return community_graphs
 
@@ -58,6 +58,6 @@ class CommunityRank(object):
         pagerankings = self.pageranks[community_num]
         return sorted(pagerankings.items(), key=itemgetter(1), reverse=True)
 
-def adj_lists_to_graph(adjacency_lists):
+def adj_lists_to_directed_graph(adjacency_lists):
     """Turns a dict of lists of nodes to a directed graph"""
-    return nx.from_dict_of_lists(adjacency_lists)
+    return nx.from_dict_of_lists(adjacency_lists, create_using=nx.DiGraph())
