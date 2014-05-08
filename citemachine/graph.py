@@ -18,7 +18,7 @@ class CommunityRank(object):
         self.community_graphs = self._build_community_graphs(communities,
                                       valid_communities=major_communities)
 
-        self.pageranks = self._pagerank_communities(self.community_graphs)
+        self.community_rankings = self._pagerank_communities(self.community_graphs)
 
     def _get_communities(self, partitions):
         community_sets = defaultdict(set)
@@ -50,12 +50,10 @@ class CommunityRank(object):
 
         pageranks = {}
         for com in community_graphs:
-            pageranks[com] = nx.pagerank(community_graphs[com], max_iter=200)
+            pagerank = nx.pagerank(community_graphs[com], max_iter=200)
+            pageranks[com] = sorted(pagerank.items(), key=itemgetter(1), reverse=True)
         return pageranks
-
-    def rankings_for_community(self, community_num):
-        pagerankings = self.pageranks[community_num]
-        return sorted(pagerankings.items(), key=itemgetter(1), reverse=True)
+        
 
 def adj_lists_to_directed_graph(adjacency_lists):
     """Turns a dict of lists of nodes to a directed graph"""
