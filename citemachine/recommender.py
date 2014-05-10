@@ -1,4 +1,6 @@
 from datetime import date
+from collections import defaultdict
+from operator import itemgetter
 import cPickle
 
 from gensim.models.ldamodel import LdaModel
@@ -97,3 +99,80 @@ class LDARecommender(object):
         num_encoded_text = self.preprocessor.text_to_number_encoding(text)
         topic_vector = self.LDA[num_encoded_text]
         return topic_vector
+
+
+class CiteMachine(object):
+
+    def __init__(self, recommender, communityrank):
+        self.recommender = recommender
+        self.communityrank = communityrank
+        self.community_topics = self._get_community_topics()
+
+    def _get_community_topics(self):
+        community_graphs = self.communityrank.community_graphs
+        num_encodings = self.recommender.preprocessor.number_encodings
+        LDA = self.recommender.LDA
+
+        community_topics = {}
+        for com_id in community_graphs:
+
+            community_word_counts = defaultdict(int)
+            for doc in community_graphs[com_id].nodes():
+                for word_id, count in num_encodings[doc]:
+
+                    community_word_counts[word_id] += count
+
+            community_topics[com_id] = LDA[community_word_counts.items()]
+
+        return community_topics
+
+    def get_recommended_docs_for_text(self, text, num_communities=5):
+
+        query_topics = self.recommender.text_to_topic_vector(text)
+        ranked_communities = self.rank_communities_by_topics(query_topics)
+
+        docs = []
+        for com, score in ranked_communities[:num_communities]:
+            for doc, score in self.communityrank.community_rankings[com][:10]:
+                docs.append(doc)
+
+        return self._renrank_on_topics(query_topics, docs)
+
+    def rank_communities_by_topics(self, topics):
+        similarity_scores = []
+        for com, com_topics in self.community_topics.items():
+            score = topic_model.histogram_intersection_kernel(topics, com_topics)
+            similarity_scores.append((com, score))
+        return  sorted(similarity_scores, key=itemgetter(1), reverse=True)
+
+    def _renrank_on_topics(self, query_topics, docs):
+        recommender = self.recommender
+        results = []
+        for doc in docs:
+            score = topic_model.histogram_intersection_kernel(query_topics, recommender.topics[doc])
+            results.append((doc, score))
+
+        return sorted(results, key=itemgetter(1), reverse=True)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
